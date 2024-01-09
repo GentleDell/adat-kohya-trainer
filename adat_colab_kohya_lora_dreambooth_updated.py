@@ -114,15 +114,13 @@ def install_dependencies():
 
 
     !pip install {'-q' if not verbose else ''} --upgrade -r requirements.txt
-    !pip install {'-q' if not verbose else ''} torch==2.0.0+cu118 torchvision==0.15.1+cu118 torchaudio==2.0.1+cu118 torchtext==0.15.1 torchdata==0.6.0 --extra-index-url https://download.pytorch.org/whl/cu118 -U
-
-    if install_xformers:
-        !pip install {'-q' if not verbose else ''} xformers==0.0.19 triton==2.0.0 -U
 
     from accelerate.utils import write_basic_config
 
     if not os.path.exists(accelerate_config):
         write_basic_config(save_location=accelerate_config)
+
+    !pip install --upgrade bitsandbytes
 
 
 def remove_bitsandbytes_message(filename):
@@ -199,7 +197,7 @@ def main():
     os.environ["BITSANDBYTES_NOWELCOME"] = "1"
     os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
-    cuda_path = "/usr/local/cuda-11.8/targets/x86_64-linux/lib/"
+    cuda_path = "/usr/local/cuda-12.2/targets/x86_64-linux/lib/"
     ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")
     os.environ["LD_LIBRARY_PATH"] = f"{ld_library_path}:{cuda_path}"
 
