@@ -625,10 +625,15 @@ def clean_directory(directory):
     for item in os.listdir(directory):
         file_path = os.path.join(directory, item)
         if os.path.isfile(file_path):
-            file_ext = os.path.splitext(item)[1]
+
+            rn_item = os.path.splitext(item)[0] + os.path.splitext(item)[1].lower()
+            rn_file_path = os.path.join(directory, rn_item)
+            os.rename(file_path, rn_file_path)
+
+            file_ext = os.path.splitext(rn_item)[1]
             if file_ext not in supported_types:
-                print(f"Deleting file {item} from {directory}")
-                os.remove(file_path)
+                print(f"Deleting file {rn_item} from {directory}")
+                os.remove(rn_file_path)
         elif os.path.isdir(file_path) and recursive:
             clean_directory(file_path)
 
