@@ -39,14 +39,20 @@ drive.mount('/content/drive')
 
 # %store -r
 
-# root_dir
+# root_dir and un-reusable data
 root_dir = "/content"
 deps_dir = os.path.join(root_dir, "deps")
-repo_dir = os.path.join(root_dir, "adat-kohya-trainer")
-training_dir = os.path.join(root_dir, "LoRA")
-pretrained_model = os.path.join(root_dir, "pretrained_model")
-vae_dir = os.path.join(root_dir, "vae")
-config_dir = os.path.join(training_dir, "config")
+
+# common utils dir, for re-usable data，跑完一次后**_一般不用修改_**。
+common_dir = "/content/drive/MyDrive/Startup/Colab_Train_Folder/Common/"
+repo_dir = os.path.join(common_dir, "adat-kohya-trainer")
+pretrained_model = os.path.join(common_dir, "pretrained_model")
+vae_dir = os.path.join(common_dir, "vae")
+
+# @markdown phone_number_dir: 存储电话号码相关训练的所有中间结果和最终结果，**_需要根据电话号码进行修改_**。
+# phone number specific data
+phone_number_dir = "/content/drive/MyDrive/Startup/Colab_Train_Folder/phone_number/" #@param {type:"string"}
+config_dir = os.path.join(phone_number_dir, "config")
 
 # repo_dir
 accelerate_config = os.path.join(repo_dir, "accelerate_config/config.yaml")
@@ -57,7 +63,7 @@ for store in [
     "root_dir",
     "deps_dir",
     "repo_dir",
-    "training_dir",
+    "phone_number_dir",
     "pretrained_model",
     "vae_dir",
     "accelerate_config",
@@ -71,10 +77,10 @@ for store in [
 
 repo_url = "https://github.com/GentleDell/adat-kohya-trainer"
 bitsandytes_main_py = "/usr/local/lib/python3.10/dist-packages/bitsandbytes/cuda_setup/main.py"
-branch = ""  # @param {type: "string"}
-install_xformers = True  # @param {'type':'boolean'}
-mount_drive = True  # @param {type: "boolean"}
+branch = "feature/adatTrainer"  # @param ["", "feature/adatTrainer"]
+
 verbose = False # @param {type: "boolean"}
+mount_drive = True
 
 def read_file(filename):
     with open(filename, "r") as f:
@@ -157,14 +163,17 @@ def main():
 
     for dir in [
         deps_dir,
-        training_dir,
+        phone_number_dir,
         config_dir,
         pretrained_model,
         vae_dir
     ]:
         os.makedirs(dir, exist_ok=True)
 
-    clone_repo(repo_url)
+    if os.path.exists(repo_dir):
+        print("trainer repo is already cloned")
+    else:
+        clone_repo(repo_url)
 
     if branch:
         os.chdir(repo_dir)
@@ -284,12 +293,17 @@ if v2_model_name:
 def install(checkpoint_name, url):
     ext = "ckpt" if url.endswith(".ckpt") else "safetensors"
 
-    hf_token = "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"
-    user_header = f'"Authorization: Bearer {hf_token}"'
-    !aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {pretrained_model} -o {checkpoint_name}.{ext} "{url}"
+    if os.path.isfile(os.path.join(pretrained_model, f"{checkpoint_name}.{ext}")):
+      print(f"{checkpoint_name}.{ext}" + " already exist in " + pretrained_model)
+    else:
+      hf_token = "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"
+      user_header = f'"Authorization: Bearer {hf_token}"'
+      !aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {pretrained_model} -o {checkpoint_name}.{ext} "{url}"
 
 
 def install_checkpoint():
+    if len(installModels) + len(installv2Models) > 1:
+        raise ValueError("This script can train only 1 LoRA per running.")
     for model in installModels:
         install(model[0], model[1])
     for v2model in installv2Models:
@@ -355,9 +369,12 @@ if vae_name in vaes:
 
 
 def install(vae_name, url):
-    hf_token = "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"
-    user_header = f'"Authorization: Bearer {hf_token}"'
-    !aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {vae_dir} -o {vae_name} "{url}"
+    if os.path.isfile(os.path.join(vae_dir, vae_name)):
+      print(vae_name + " already exists in " + vae_name)
+    else:
+      hf_token = "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"
+      user_header = f'"Authorization: Bearer {hf_token}"'
+      !aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {vae_dir} -o {vae_name} "{url}"
 
 
 def install_vae():
@@ -378,15 +395,18 @@ You have three options for acquiring your dataset:
 """
 
 # Commented out IPython magic to ensure Python compatibility.
-# @title ## 3.1. Locating Train Data Directory
-# @markdown Define the location of your training data. This cell will also create a folder based on your input. Regularization Images is optional and can be skipped.
+# @title ## 3.1. Config Train Folder Directory
+# @markdown Define the location of training folders.
 import os
 from IPython.utils import capture
 
 # %store -r
 
-train_data_dir = "/content/drive/MyDrive/Startup/Colab Notebooks/LoRA/train_data/"  # @param {type:'string'}
-reg_data_dir = "/content/drive/MyDrive/Startup/Colab Notebooks/LoRA/reg_data/"  # @param {type:'string'}
+# Create a folder in the phone number folder.
+train_data_dir = os.path.join(phone_number_dir, "train_data/")
+
+# Regularization Images is optional and can be skipped.
+reg_data_dir = os.path.join(phone_number_dir, "reg_data/")
 
 for dir in [train_data_dir, reg_data_dir]:
     if dir:
@@ -395,9 +415,9 @@ for dir in [train_data_dir, reg_data_dir]:
 #             %store dir
             del cap
 
-print(f"Your train data directory : {train_data_dir}")
+print(f"Your train_data_dir : {train_data_dir}")
 if reg_data_dir:
-    print(f"Your reg data directory : {reg_data_dir}")
+    print(f"Your reg_data_dir : {reg_data_dir}")
 
 # @title ## 3.2. Unzip Dataset
 
@@ -406,19 +426,15 @@ import shutil
 from pathlib import Path
 
 #@title ## Unzip Dataset
-# @markdown Use this section if your dataset is in a `zip` file and has been uploaded somewhere. This code cell will download your dataset and automatically extract it to the `train_data_dir` if the `unzip_to` variable is empty.
-zipfile_url = "" #@param {type:"string"}
-zipfile_name = "zipfile.zip"
-unzip_to = "" #@param {type:"string"}
+# @markdown Use this section if your dataset is in a `zip` file and has been uploaded somewhere.
+# @markdown This code cell will download your dataset and extract it to the `phone_number_dir/train_data_dir`.
+zipfile_url = "/content/drive/MyDrive/Startup/Colab_Train_Folder/phone_number/phone_number.zip" #@param {type:"string"}
+unzip_to = train_data_dir
 
 hf_token = "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"
 user_header = f'"Authorization: Bearer {hf_token}"'
 
-if unzip_to:
-    os.makedirs(unzip_to, exist_ok=True)
-else:
-    unzip_to = train_data_dir
-
+os.makedirs(unzip_to, exist_ok=True)
 
 def download_dataset(url):
     if url.startswith("/content"):
@@ -449,14 +465,13 @@ def remove_files(train_dir, files_to_move):
         file_path = os.path.join(train_dir, filename)
         if filename in files_to_move:
             if not os.path.exists(file_path):
-                shutil.move(file_path, training_dir)
+                shutil.move(file_path, phone_number_dir)
             else:
                 os.remove(file_path)
 
 
 zip_file = download_dataset(zipfile_url)
 extract_dataset(zip_file, unzip_to)
-os.remove(zip_file)
 
 #@title **_UNUSED_** 3.3. Image Scraper (Optional)
 # import os
@@ -895,22 +910,20 @@ project_name = "SD_Train_LoRA_multi_concept"  # @param {type:"string"}
 if not project_name:
     project_name = "last"
 # %store project_name
-pretrained_model_name_or_path = "/content/pretrained_model/Stable-Diffusion-v1-5.safetensors"  # @param {type:"string"}
-vae = "/content/vae/stablediffusion.vae.pt"  # @param {type:"string"}
-output_dir = "/content/drive/MyDrive/Startup/Colab Notebooks/LoRA/output"  # @param {'type':'string'}
 
-# @markdown `output_to_drive` sets default `output_dir` to `/content/drive/MyDrive/LoRA/output`. This will override the `output_dir` variable defined above.
-output_to_drive = False  # @param {'type':'boolean'}
+chk_pt = installModels + installv2Models
+chk_pt_name = chk_pt[0][0]
+chk_pt_ext = "ckpt" if chk_pt[0][1].endswith(".ckpt") else "safetensors"
+pretrained_model_name_or_path = os.path.join(pretrained_model, f"{chk_pt_name}.{chk_pt_ext}")
 
-if output_to_drive:
-    output_dir = "/content/drive/MyDrive/LoRA/output"
+vae_name = install_vaes[0][0]
+vae = os.path.join(vae_dir, vae_name)
 
-    if not os.path.exists("/content/drive"):
-        drive.mount("/content/drive")
+output_dir = os.path.join(phone_number_dir, "output")
 
 sample_dir = os.path.join(output_dir, "sample")
 for dir in [output_dir, sample_dir]:
-    os.makedirs(dir, exist_ok=True)
+    os.makedirs(dir)
 
 print("Project Name: ", project_name)
 print("Model Version: Stable Diffusion V1.x") if not v2 else ""
@@ -1038,6 +1051,7 @@ with open(dataset_config, "w") as f:
 print(config_str)
 
 # @title ## 5.3. LoRA and Optimizer Config
+import warnings
 
 # @markdown ### LoRA Config:
 network_category = "LoRA"  # @param ["LoRA", "LoCon", "LoCon_Lycoris", "LoHa"]
@@ -1106,6 +1120,7 @@ if not network_weight:
 else:
     if os.path.exists(network_weight):
         print(f"  - Loading LoRA weight: {network_weight}")
+        warnings.warn(f"\033[93m Will train from LoRA weight: {network_weight}")
     else:
         print(f"  - {network_weight} does not exist.")
         network_weight = ""
@@ -1156,7 +1171,7 @@ clip_skip = 2  # @param {type:"number"}
 gradient_checkpointing = False  # @param {type:"boolean"}
 gradient_accumulation_steps = 1  # @param {type:"number"}
 seed = 42  # @param {type:"number"}
-logging_dir = "/content/LoRA/logs"
+logging_dir = os.path.join(phone_number_dir, "logs")
 prior_loss_weight = 1.0
 
 os.chdir(repo_dir)
@@ -1271,16 +1286,11 @@ print(config_str)
 #@title ## 5.5. Start Training
 
 #@markdown Check your config here if you want to edit something:
-#@markdown - `sample_prompt` : /content/LoRA/config/sample_prompt.txt
-#@markdown - `config_file` : /content/LoRA/config/config_file.toml
-#@markdown - `dataset_config` : /content/LoRA/config/dataset_config.toml
+#@markdown - `sample_prompt` : **_phone_number_dir_**/config/sample_prompt.txt
+#@markdown - `config_file` : **_phone_number_dir_**/config/config_file.toml
+#@markdown - `dataset_config` : **_phone_number_dir_**/config/dataset_config.toml
 
-#@markdown Generated sample can be seen here: /content/LoRA/output/sample
-
-#@markdown You can import config from another session if you want.
-sample_prompt = "/content/LoRA/config/sample_prompt.txt" #@param {type:'string'}
-config_file = "/content/LoRA/config/config_file.toml" #@param {type:'string'}
-dataset_config = "/content/LoRA/config/dataset_config.toml" #@param {type:'string'}
+#@markdown Generated sample can be seen in: **_phone_number_dir_**/output/sample
 
 accelerate_conf = {
     "config_file" : accelerate_config,
@@ -1288,9 +1298,9 @@ accelerate_conf = {
 }
 
 train_conf = {
-    "sample_prompts" : sample_prompt,
+    "sample_prompts" : prompt_path,
     "dataset_config" : dataset_config,
-    "config_file" : config_file
+    "config_file" : config_path
 }
 
 def train(config):
@@ -1327,11 +1337,13 @@ os.chdir(repo_dir)
 
 # Commented out IPython magic to ensure Python compatibility.
 # @title ## 6.1. Visualize loss graph (Optional)
-training_logs_path = "/content/LoRA/logs"  # @param {type : "string"}
+# @markdown 看一下训练收否收敛，保存的模型中离**较小**处最近的那个效果一般最好。\
+# @markdown 参考: ChilloutMix 的finetune loss在 0.043896 左右
+training_logs_path = os.path.join(phone_number_dir, "logs")
 
 os.chdir(repo_dir)
-# %load_ext tensorboard
-# %tensorboard --logdir {training_logs_path}
+%load_ext tensorboard
+%tensorboard --logdir {training_logs_path}
 
 # @title ## 6.2. Interrogating LoRA Weights
 # @markdown Now you can check if your LoRA trained properly.
