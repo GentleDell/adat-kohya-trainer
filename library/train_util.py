@@ -3129,23 +3129,27 @@ def sample_images(
                 print(f"width: {width}")
                 print(f"sample_steps: {sample_steps}")
                 print(f"scale: {scale}")
-                image = pipeline(
-                    prompt=prompt,
-                    height=height,
-                    width=width,
-                    num_inference_steps=sample_steps,
-                    guidance_scale=scale,
-                    negative_prompt=negative_prompt,
-                ).images[0]
+                print("update applied:")
+                for prompt_n in re.findall(r"\[(.*?)\]", prompt):
+                    print(f"test prompt: {prompt_n}")
+                    image = pipeline(
+                        prompt=prompt_n,
+                        height=height,
+                        width=width,
+                        num_inference_steps=sample_steps,
+                        guidance_scale=scale,
+                        negative_prompt=negative_prompt,
+                    ).images[0]
 
-                ts_str = time.strftime("%Y%m%d%H%M%S", time.localtime())
-                num_suffix = f"e{epoch:06d}" if epoch is not None else f"{steps:06d}"
-                seed_suffix = "" if seed is None else f"_{seed}"
-                img_filename = (
-                    f"{'' if args.output_name is None else args.output_name + '_'}{ts_str}_{num_suffix}_{i:02d}{seed_suffix}.png"
-                )
+                    pt_str = prompt_n.replace(",", " ").replace(" ", "_")
+                    ts_str = time.strftime("%Y%m%d%H%M%S", time.localtime())
+                    num_suffix = (
+                        f"e{epoch:06d}" if epoch is not None else f"{steps:06d}"
+                    )
+                    seed_suffix = "" if seed is None else f"_{seed}"
+                    img_filename = f"{'' if args.output_name is None else args.output_name + '_'}{pt_str}+'_‘+{ts_str}_{num_suffix}_{i:02d}{seed_suffix}.png"
 
-                image.save(os.path.join(save_dir, img_filename))
+                    image.save(os.path.join(save_dir, img_filename))
 
     # clear pipeline and cache to reduce vram usage
     del pipeline

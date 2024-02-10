@@ -1174,6 +1174,11 @@ seed = 42  # @param {type:"number"}
 logging_dir = os.path.join(phone_number_dir, "logs")
 prior_loss_weight = 1.0
 
+# @markdown - 训练过程中会使用下面这一组prompt进行生成，方便监控生成效果的变化，可以根据电话号码更改。
+# @markdown   中间生成的图会存在 5.1输出的log 的 "Output Path" 处。不同的几组prompt使用中括号分割，
+# @markdown   例如: "[blue dress, girl], [red skirt, boy], [long dress, beach]" 代表三组prompt。
+sample_prompt = "[blue dress, girl], [red skirt, boy], [long dress, beach]" # @param {'type':'string'}
+
 os.chdir(repo_dir)
 
 sample_str = f"""
