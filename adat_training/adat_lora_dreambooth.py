@@ -80,6 +80,7 @@ class EnvChecker:
             os.chdir(self.repo_dir)
             status = os.system(f"git fetch")
             status = os.system(f"git checkout {self.branch}")
+            status = os.system(f"git pull")
             if status != 0:
                 raise Exception("Failed to checkout branch or commit")
 
