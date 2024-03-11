@@ -573,7 +573,7 @@ class TrainModelConfig:
                     "caption_dropout_every_n_epochs": 0,
                     "flip_aug": False,
                     "color_aug": False,
-                    "face_crop_aug_range": [2.0, 3.0],  # TODO test
+                    "face_crop_aug_range": None,  # 需要用别的工具做完检测并在文件名体现脸部位置后才可用
                     "subsets": subsets,
                 }
             ],
