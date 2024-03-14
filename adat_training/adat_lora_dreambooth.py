@@ -48,7 +48,7 @@ class EnvChecker:
         assert os.path.exists(self.bitsandbytes_main_py), "bitsandbytes path is wrong"
 
         # Train branch
-        self.branch = "feature/adatTrainer"
+        self.branch = "experiment/adatTrainerAliCloud"
 
     def config_hg_accelerat(self):
 
