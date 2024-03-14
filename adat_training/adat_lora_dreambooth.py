@@ -74,7 +74,7 @@ class EnvChecker:
                 f"git clone git@github.com:GentleDell/adat-kohya-trainer.git"
             )
             if status != 0:
-                raise Exception("Failed to clone branch or commit")
+                raise Exception("Failed to clone the repository")
 
         if self.branch:
             os.chdir(self.repo_dir)
@@ -147,9 +147,11 @@ class ModelChecker:
             )
         else:
             user_header = f'"Authorization: Bearer {hf_token}"'
-            os.system(
+            status = os.system(
                 f"aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {self.pretrained_model_dir} -o {checkpoint_name}.{ext} {url}"
             )
+            if status != 0:
+                raise Exception("Failed to download model check point.")
 
     def install_checkpoint(self):
         if len(self.SD_Models) + len(self.SD_v2Models) > 1:
@@ -164,9 +166,11 @@ class ModelChecker:
             print(vae_name + " already exists in " + vae_name)
         else:
             user_header = f'"Authorization: Bearer {hf_token}"'
-            os.system(
+            status = os.system(
                 f"aria2c --console-log-level=error --summary-interval=10 --header={user_header} -c -x 16 -k 1M -s 16 -d {self.vae_dir} -o {vae_name} {url}"
             )
+            if status != 0:
+                raise Exception("Failed to download VAE.")
 
     def install_vae(self):
         for vae in self.SD_vaes:
@@ -190,7 +194,9 @@ class DataReader:
         print(f"Your reg_data_dir : {self.reg_data_dir}")
 
     def extract_dataset(self, zip_file, output_path):
-        os.system(f"unzip -j -o {zip_file} -d {output_path}")
+        status = os.system(f"unzip -j -o {zip_file} -d {output_path}")
+        if status != 0:
+            raise Exception("Failed to unzip dataset.")
 
     def remove_files(self, train_dir, files_to_move):
         for filename in os.listdir(train_dir):
@@ -362,7 +368,9 @@ class DataAnnotator:
         os.chdir(finetune_dir)
 
         # The installation cache is in ~/cache/pip/huggingface
-        os.system(f"python tag_images_by_wd14_tagger.py {self.args}")
+        status = os.system(f"python tag_images_by_wd14_tagger.py {self.args}")
+        if status != 0:
+            raise Exception("Failed to tag dataset with wd14 tagger.")
 
     def process_tags(self, filename, custom_tag, append, remove_tag):
         contents = read_file(filename)
@@ -865,4 +873,8 @@ def start_training(
 
     # Will download the CLIPvit model from hg, ~1.71GB
     # The model is saved in huggingface cache folder, e.g. ~/.cache/huggingface/hub
-    os.system(f"accelerate launch {accelerate_args} train_network.py {train_args}")
+    status = os.system(
+        f"accelerate launch {accelerate_args} train_network.py {train_args}"
+    )
+    if status != 0:
+        raise Exception("Failed to launch the training.")
