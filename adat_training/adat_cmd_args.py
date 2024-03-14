@@ -6,7 +6,7 @@ from adat_lora_constant import models, v2_models, vaes
 # Refer to https://note.com/kohya_ss/n/nad3bce9a3622 for more detailed explanation
 #######################################################
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(fromfile_prefix_chars="@")
 
 parser.add_argument(
     "root_dir",  # root_dir, 设置为NAS比较好，这样很多东西不用重装
