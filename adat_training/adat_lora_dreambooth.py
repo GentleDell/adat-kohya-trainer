@@ -42,7 +42,7 @@ class EnvChecker:
         self.finetune_dir = os.path.join(self.repo_dir, "finetune")
 
         self.bitsandbytes_main_py = (
-            "/home/zhantao/Tools/miniconda3/envs/adat_lora_trainer/lib/python3.10/site-packages/bitsandbytes/cuda_setup/main.py"
+            "/home/ecs-user/miniconda3/envs/adat_trainer/lib/python3.10/site-packages/bitsandbytes/cuda_setup/main.py"
             # "/usr/local/lib/python3.10/dist-packages/bitsandbytes/cuda_setup/main.py" # 只有用系统python直接装才是这个路径
         )
         assert os.path.exists(self.bitsandbytes_main_py), "bitsandbytes path is wrong"
@@ -90,7 +90,7 @@ class EnvChecker:
         os.environ["BITSANDBYTES_NOWELCOME"] = "1"
         os.environ["SAFETENSORS_FAST_GPU"] = "1"
 
-        cuda_path = "/usr/local/cuda-12.3/targets/x86_64-linux/lib/"
+        cuda_path = "/usr/local/cuda-12.1/targets/x86_64-linux/lib/"
         assert os.path.exists(cuda_path), "cuda lib path is wrong"
 
         ld_library_path = os.environ.get("LD_LIBRARY_PATH", "")

@@ -133,7 +133,10 @@ if __name__ == "__main__":
     lora_config = LoraConfig(model_config, dir_settings, arguments)
     print("LoRA configuration succeeds.\n")
 
-    start_training(dir_settings, model_config, lora_config)
-    print("Training succeeds.\n")
+    confirmation = input("Confirm to start the training? Yes|No: ")
+    if confirmation.lower() == "yes":
 
-    visualize_loss(os.path.join(dir_settings.phone_number_dir, "logs"))
+        start_training(dir_settings, model_config, lora_config)
+        print("Training succeeds.\n")
+
+        visualize_loss(os.path.join(dir_settings.phone_number_dir, "logs"))
