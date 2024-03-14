@@ -25,8 +25,8 @@ Environments:
     !apt-get install aria2 {'-qq' if not verbose else ''}
     !sudo apt-get install unzip
     
-    !pip install --upgrade bitsandbytes
-    !pip install {'-q' if not verbose else ''} --upgrade -r requirements.txt
+    conda env create --name adat_trainer --file=environment.yml
+"""
 
 """
 Arguments:
