@@ -76,6 +76,8 @@ def train(args):
         args.seed = random.randint(0, 2**32)
     set_seed(args.seed)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+
     tokenizer = train_util.load_tokenizer(args)
 
     # データセットを準備する
@@ -168,12 +170,12 @@ def train(args):
 
     # 学習を準備する
     if cache_latents:
-        vae.to(accelerator.device, dtype=weight_dtype)
+        vae.to(device, dtype=weight_dtype)
         vae.requires_grad_(False)
         vae.eval()
         with torch.no_grad():
             train_dataset_group.cache_latents(vae, args.vae_batch_size)
-        vae.to("cpu")
+        # vae.to("cpu")
         if torch.cuda.is_available():
             torch.cuda.empty_cache()
         gc.collect()
@@ -195,7 +197,7 @@ def train(args):
     network = network_module.create_network(1.0, args.network_dim, args.network_alpha, vae, text_encoder, unet, **net_kwargs)
     if network is None:
         return
-    
+
     if hasattr(network, "prepare_network"):
         network.prepare_network(args)
 
@@ -276,9 +278,9 @@ def train(args):
         network, optimizer, train_dataloader, lr_scheduler = accelerator.prepare(network, optimizer, train_dataloader, lr_scheduler)
 
     unet.requires_grad_(False)
-    unet.to(accelerator.device, dtype=weight_dtype)
+    unet.to(device, dtype=weight_dtype)
     text_encoder.requires_grad_(False)
-    text_encoder.to(accelerator.device)
+    text_encoder.to(device)
     if args.gradient_checkpointing:  # according to TI example in Diffusers, train is required
         unet.train()
         text_encoder.train()
@@ -303,7 +305,7 @@ def train(args):
     if not cache_latents:
         vae.requires_grad_(False)
         vae.eval()
-        vae.to(accelerator.device, dtype=weight_dtype)
+        vae.to(device, dtype=weight_dtype)
 
     # 実験的機能：勾配も含めたfp16学習を行う　PyTorchにパッチを当ててfp16でのgrad scaleを有効にする
     if args.full_fp16:
@@ -553,7 +555,7 @@ def train(args):
             with accelerator.accumulate(network):
                 with torch.no_grad():
                     if "latents" in batch and batch["latents"] is not None:
-                        latents = batch["latents"].to(accelerator.device)
+                        latents = batch["latents"].to(device)
                     else:
                         # latentに変換
                         latents = vae.encode(batch["images"].to(dtype=weight_dtype)).latent_dist.sample()
@@ -562,7 +564,7 @@ def train(args):
 
                 with torch.set_grad_enabled(train_text_encoder):
                     # Get the text embedding for conditioning
-                    input_ids = batch["input_ids"].to(accelerator.device)
+                    input_ids = batch["input_ids"].to(device)
                     encoder_hidden_states = train_util.get_hidden_states(args, input_ids, tokenizer, text_encoder, weight_dtype)
 
                 # Sample noise that we'll add to the latents
@@ -614,7 +616,15 @@ def train(args):
                 global_step += 1
 
                 train_util.sample_images(
-                    accelerator, args, None, global_step, accelerator.device, vae, tokenizer, text_encoder, unet
+                    accelerator,
+                    args,
+                    None,
+                    global_step,
+                    device,
+                    vae,
+                    tokenizer,
+                    text_encoder,
+                    unet,
                 )
 
             current_loss = loss.detach().item()
@@ -665,7 +675,17 @@ def train(args):
                 if saving and args.save_state:
                     train_util.save_state_on_epoch_end(args, accelerator, model_name, epoch + 1)
 
-        train_util.sample_images(accelerator, args, epoch + 1, global_step, accelerator.device, vae, tokenizer, text_encoder, unet)
+        train_util.sample_images(
+            accelerator,
+            args,
+            epoch + 1,
+            global_step,
+            device,
+            vae,
+            tokenizer,
+            text_encoder,
+            unet,
+        )
 
         # end of epoch
 
