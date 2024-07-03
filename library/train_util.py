@@ -1199,8 +1199,9 @@ class DreamBoothDataset(BaseDataset):
             )
 
             # 画像ファイルごとにプロンプトを読み込み、もしあればそちらを使う
+            print("load image captions ...")
             captions = []
-            for img_path in img_paths:
+            for img_path in tqdm(img_paths):
                 cap_for_img = read_caption(img_path, subset.caption_extension)
                 if cap_for_img is None and subset.class_tokens is None:
                     print(
@@ -1248,6 +1249,7 @@ class DreamBoothDataset(BaseDataset):
                 num_train_images += subset.num_repeats * len(img_paths)
 
             # for img_path, caption in zip(img_paths, captions):
+            print("register image ...")
             for img_path, caption in tqdm(
                 zip(img_paths, captions), total=len(img_paths)
             ):
