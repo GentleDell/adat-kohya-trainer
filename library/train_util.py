@@ -1247,7 +1247,10 @@ class DreamBoothDataset(BaseDataset):
             else:
                 num_train_images += subset.num_repeats * len(img_paths)
 
-            for img_path, caption in zip(img_paths, captions):
+            # for img_path, caption in zip(img_paths, captions):
+            for img_path, caption in tqdm(
+                zip(img_paths, captions), total=len(img_paths)
+            ):
                 info = ImageInfo(
                     img_path, subset.num_repeats, caption, subset.is_reg, img_path
                 )
