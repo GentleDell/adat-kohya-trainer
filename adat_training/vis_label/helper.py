@@ -2,6 +2,8 @@ import os
 from os.path import join as pjoin
 from glob import iglob, glob
 from textwrap import TextWrapper
+import time
+from IPython import display
 
 import numpy as np
 import pandas as pd
@@ -108,6 +110,12 @@ def randomly_check_labeling_quality(img_tokens_list, percent=20, seed=None):
             verticalalignment="top",
             multialignment="left",
         )
-        plt.show()
+        plt.axis("off")
+        # display the figure
+        display.display(plt.gcf())
 
-        input()
+        print(f"Checking Image: {filepath}")
+
+        time.sleep(0.5)
+        input("press Enter to continue... OR use cell stop button to stop \n")
+        display.clear_output(wait=True)
