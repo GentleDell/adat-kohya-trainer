@@ -75,16 +75,15 @@ def search_img_given_token():
     pass
 
 
-def randomly_check_labeling_quality(img_tokens_list, percent=20, seed=None):
+def randomly_check_labeling_quality(img_tokens_list, percent=20, seed=0):
     assert (percent < 100) and (
         percent > 0
     ), "checking percentage should be less than 100"
 
-    if seed is not None:
-        np.random.seed(seed)
+    rng = np.random.default_rng(seed)
 
     num_img = len(img_tokens_list)
-    selected_indices = np.random.choice(
+    selected_indices = rng.choice(
         num_img, size=int(num_img * percent / 100), replace=False
     )
 
