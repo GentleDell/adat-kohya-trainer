@@ -1,6 +1,6 @@
 import os
 from os.path import join as pjoin
-from glob import iglob, glob
+from glob import glob
 from textwrap import TextWrapper
 import time
 from IPython import display
@@ -10,12 +10,13 @@ import pandas as pd
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 import matplotlib.pyplot as plt
 from PIL import Image
+from tqdm import tqdm
 
 
 def load_tokens(path, skip_tokens=[]):
     img_token_list = []
-    iter_token_files = iglob(pjoin(path, "*.txt"))
-    for file in iter_token_files:
+    iter_token_files = glob(pjoin(path, "*.txt"))
+    for file in tqdm(iter_token_files):
         with open(file, "r") as f:
             tokens = f.readline()
         tokens = tokens.split(", ")
@@ -90,7 +91,7 @@ def randomly_check_labeling_quality(img_tokens_list, percent=20, seed=0):
     checking_list = {}
     tw = TextWrapper()
     tw.width = 25
-    for idx in selected_indices:
+    for idx in tqdm(selected_indices):
         filepath = os.path.splitext(img_tokens_list[idx][0])[0]
         token = img_tokens_list[idx][1:]
         # Image lib can handle data format and suffix mismatch
