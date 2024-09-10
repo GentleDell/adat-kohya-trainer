@@ -24,9 +24,7 @@ def load_tokens(path, skip_tokens=[]):
         img_token_list.append([file, *tokens])
 
     img_files = glob(pjoin(path, "*.png")) + glob(pjoin(path, "*.jpg"))
-    assert len(img_token_list) == len(
-        img_files
-    ), "num of label does not match the num of images"
+    assert len(img_token_list) == len(img_files), f"{len(img_token_list)} annotations do not match {len(img_files)} images"
 
     return img_token_list
 
